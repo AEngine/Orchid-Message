@@ -1,0 +1,35 @@
+{
+  "name": "aengine/orchid-message",
+  "description": "PSR-7 implementation",
+  "keywords": [
+    "php",
+    "framework",
+    "psr-4",
+    "AEngine",
+    "Orchid",
+    "Message"
+  ],
+  "homepage": "https://dev.aengine.ru/AEngine/Orchid-Message",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Aleksey Ilyin",
+      "email": "alksily@aengine.ru",
+      "homepage": "http://aengine.ru/",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">=7.0",
+    "psr/http-message": "~1.0",
+    "aengine/orchid": "~0.3.0"
+  },
+  "provide": {
+    "psr/http-message-implementation": "1.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "AEngine\\Orchid\\Message\\": "src/"
+    }
+  }
+}
