@@ -4,10 +4,10 @@
   "keywords": [
     "php",
     "framework",
-    "psr-4",
+    "psr-7",
+    "Message",
     "AEngine",
-    "Orchid",
-    "Message"
+    "Orchid"
   ],
   "homepage": "https://dev.aengine.ru/AEngine/Orchid-Message",
   "license": "MIT",

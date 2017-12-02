@@ -4,4 +4,14 @@ The latest version of this file can be found at the master branch of the
 Orchid Message repository.
 
 ## 1.0.0 (2017-12-02)
+- Update changelog
+- Fix composer.json
+
+### 1.0.0-RC3 (2017-12-02)
+- Fix dependency
+
+### 1.0.0-RC2 (2017-12-02)
+- Fix HeadersInterface namespace
+
+### 1.0.0-RC1 (2017-12-02)
 - Separating part of the code from the main project
