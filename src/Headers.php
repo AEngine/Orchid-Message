@@ -7,12 +7,10 @@ use AEngine\Orchid\Message\Interfaces\HeadersInterface;
 
 /**
  * Headers
- *
  * This class represents a collection of HTTP headers
  * that is used in both the HTTP request and response objects.
  * It also enables header name case-insensitivity when
  * getting or setting a header value.
- *
  * Each HTTP header can have multiple values. This class
  * stores values into an array for each header name. When
  * you request a header value, you receive an array of values
@@ -44,7 +42,7 @@ class Headers extends Collection implements HeadersInterface
      */
     public static function createFromEnvironment(Environment $environment)
     {
-        $data = [];
+        $data        = [];
         $environment = self::determineAuthorization($environment);
         foreach ($environment as $key => $value) {
             $key = strtoupper($key);
@@ -102,14 +100,11 @@ class Headers extends Collection implements HeadersInterface
 
     /**
      * Set HTTP header value
-     *
      * This method sets a header value. It replaces
      * any values that may already exist for the header name.
      *
-     * @param string $key   The case-insensitive header name
+     * @param string $key The case-insensitive header name
      * @param string $value The header value
-     *
-     * @return $this
      */
     public function set($key, $value)
     {
@@ -120,14 +115,12 @@ class Headers extends Collection implements HeadersInterface
             'value'       => $value,
             'originalKey' => $key,
         ]);
-
-        return $this;
     }
 
     /**
      * Get HTTP header value
      *
-     * @param  string $key     The case-insensitive header name
+     * @param  string $key The case-insensitive header name
      * @param  mixed  $default The default value if key does not exist
      *
      * @return string[]
@@ -144,7 +137,7 @@ class Headers extends Collection implements HeadersInterface
     /**
      * Get HTTP header key as originally specified
      *
-     * @param  string $key     The case-insensitive header name
+     * @param  string $key The case-insensitive header name
      * @param  mixed  $default The default value if key does not exist
      *
      * @return string
@@ -160,23 +153,18 @@ class Headers extends Collection implements HeadersInterface
 
     /**
      * Add HTTP header value
-     *
      * This method appends a header value. Unlike the set() method,
      * this method _appends_ this new value to any values
      * that already exist for this header name.
      *
-     * @param string       $key   The case-insensitive header name
+     * @param string       $key The case-insensitive header name
      * @param array|string $value The new header value(s)
-     *
-     * @return $this
      */
     public function add($key, $value)
     {
         $oldValues = $this->get($key, []);
         $newValues = is_array($value) ? $value : [$value];
         $this->set($key, array_merge($oldValues, array_values($newValues)));
-
-        return $this;
     }
 
     /**
@@ -195,19 +183,14 @@ class Headers extends Collection implements HeadersInterface
      * Remove header from collection
      *
      * @param  string $key The case-insensitive header name
-     *
-     * @return $this
      */
     public function remove($key)
     {
         parent::remove($this->normalizeKey($key));
-
-        return $this;
     }
 
     /**
      * Normalize header name
-     *
      * This method transforms header names into a
      * normalized form. This is how we enable case-insensitive
      * header names in the other methods in this class.

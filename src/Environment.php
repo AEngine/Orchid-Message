@@ -7,7 +7,6 @@ use AEngine\Orchid\Message\Interfaces\EnvironmentInterface;
 
 /**
  * Environment
- *
  * This class decouples the Orchid application from the global PHP environment.
  * This is particularly useful for unit testing, but it also lets us create
  * custom sub-requests.

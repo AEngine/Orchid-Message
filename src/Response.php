@@ -3,15 +3,14 @@
 namespace AEngine\Orchid\Message;
 
 use AEngine\Orchid\Message\Interfaces\HeadersInterface;
-use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
+use InvalidArgumentException;
 use RuntimeException;
 
 /**
  * Response
- *
  * This class represents an HTTP response. It manages
  * the response status, headers, and body
  * according to the PSR-7 standard.
@@ -86,6 +85,7 @@ class Response extends Message implements ResponseInterface
         416 => 'Requested Range Not Satisfiable',
         417 => 'Expectation Failed',
         418 => 'I\'m a teapot',
+        421 => 'Misdirected Request',
         422 => 'Unprocessable Entity',
         423 => 'Locked',
         424 => 'Failed Dependency',
@@ -93,7 +93,9 @@ class Response extends Message implements ResponseInterface
         428 => 'Precondition Required',
         429 => 'Too Many Requests',
         431 => 'Request Header Fields Too Large',
+        444 => 'Connection Closed Without Response',
         451 => 'Unavailable For Legal Reasons',
+        499 => 'Client Closed Request',
         //Server Error 5xx
         500 => 'Internal Server Error',
         501 => 'Not Implemented',
@@ -106,20 +108,21 @@ class Response extends Message implements ResponseInterface
         508 => 'Loop Detected',
         510 => 'Not Extended',
         511 => 'Network Authentication Required',
+        599 => 'Network Connect Timeout Error',
     ];
 
     /**
      * Create new HTTP response.
      *
-     * @param int                   $status  The response status code.
+     * @param int                   $status The response status code.
      * @param HeadersInterface|null $headers The response headers.
-     * @param StreamInterface|null  $body    The response body.
+     * @param StreamInterface|null  $body The response body.
      */
     public function __construct($status = 200, HeadersInterface $headers = null, StreamInterface $body = null)
     {
-        $this->status = $this->filterStatus($status);
+        $this->status  = $this->filterStatus($status);
         $this->headers = $headers ? $headers : new Headers();
-        $this->body = $body ? $body : new Body(fopen('php://temp', 'r+'));
+        $this->body    = $body ? $body : new Body(fopen('php://temp', 'r+'));
     }
 
     /**
@@ -135,7 +138,6 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Gets the response status code.
-     *
      * The status code is a 3-digit integer result code of the server's attempt
      * to understand and satisfy the request.
      *
@@ -148,11 +150,9 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Return an instance with the specified status code and, optionally, reason phrase.
-     *
      * If no reason phrase is specified, implementations MAY choose to default
      * to the RFC 7231 or IANA recommended reason phrase for the response's
      * status code.
-     *
      * This method MUST be implemented in such a way as to retain the
      * immutability of the message, and MUST return an instance that has the
      * updated status and reason phrase.
@@ -160,10 +160,10 @@ class Response extends Message implements ResponseInterface
      * @link http://tools.ietf.org/html/rfc7231#section-6
      * @link http://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
      *
-     * @param int    $code         The 3-digit integer result code to set.
+     * @param int    $code The 3-digit integer result code to set.
      * @param string $reasonPhrase The reason phrase to use with the
-     *                             provided status code; if none is provided, implementations MAY
-     *                             use the defaults as suggested in the HTTP specification.
+     *     provided status code; if none is provided, implementations MAY
+     *     use the defaults as suggested in the HTTP specification.
      *
      * @return self
      * @throws InvalidArgumentException For invalid status code arguments.
@@ -176,7 +176,7 @@ class Response extends Message implements ResponseInterface
             throw new InvalidArgumentException('ReasonPhrase must be a string');
         }
 
-        $clone = clone $this;
+        $clone         = clone $this;
         $clone->status = $code;
         if ($reasonPhrase === '' && isset(static::$messages[$code])) {
             $reasonPhrase = static::$messages[$code];
@@ -210,7 +210,6 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Gets the response reason phrase associated with the status code.
-     *
      * Because a reason phrase is not a required element in a response
      * status line, the reason phrase value MAY be null. Implementations MAY
      * choose to return the default RFC 7231 recommended reason phrase (or those
@@ -235,9 +234,7 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Write data to the response body.
-     *
      * Note: This method is not part of the PSR-7 standard.
-     *
      * Proxies to the underlying stream and writes the provided data to it.
      *
      * @param string $data
@@ -254,13 +251,11 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Redirect.
-     *
      * Note: This method is not part of the PSR-7 standard.
-     *
      * This method prepares the response object to return an HTTP Redirect
      * response to the client.
      *
-     * @param  string|UriInterface $url    The redirect destination.
+     * @param  string|UriInterface $url The redirect destination.
      * @param  int|null            $status The redirect HTTP status code.
      *
      * @return self
@@ -282,14 +277,12 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Json.
-     *
      * Note: This method is not part of the PSR-7 standard.
-     *
      * This method prepares the response object to return an HTTP Json
      * response to the client.
      *
-     * @param  mixed $data            The data
-     * @param  int   $status          The HTTP status code.
+     * @param  mixed $data The data
+     * @param  int   $status The HTTP status code.
      * @param  int   $encodingOptions Json encoding options
      *
      * @throws RuntimeException
@@ -315,7 +308,6 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Is this response empty?
-     *
      * Note: This method is not part of the PSR-7 standard.
      *
      * @return bool
@@ -327,7 +319,6 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Is this response informational?
-     *
      * Note: This method is not part of the PSR-7 standard.
      *
      * @return bool
@@ -339,7 +330,6 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Is this response OK?
-     *
      * Note: This method is not part of the PSR-7 standard.
      *
      * @return bool
@@ -351,7 +341,6 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Is this response successful?
-     *
      * Note: This method is not part of the PSR-7 standard.
      *
      * @return bool
@@ -363,7 +352,6 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Is this response a redirect?
-     *
      * Note: This method is not part of the PSR-7 standard.
      *
      * @return bool
@@ -375,7 +363,6 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Is this response a redirection?
-     *
      * Note: This method is not part of the PSR-7 standard.
      *
      * @return bool
@@ -387,7 +374,6 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Is this response forbidden?
-     *
      * Note: This method is not part of the PSR-7 standard.
      *
      * @return bool
@@ -400,7 +386,6 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Is this response not Found?
-     *
      * Note: This method is not part of the PSR-7 standard.
      *
      * @return bool
@@ -412,7 +397,6 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Is this response a client error?
-     *
      * Note: This method is not part of the PSR-7 standard.
      *
      * @return bool
@@ -424,7 +408,6 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Is this response a server error?
-     *
      * Note: This method is not part of the PSR-7 standard.
      *
      * @return bool
@@ -436,7 +419,6 @@ class Response extends Message implements ResponseInterface
 
     /**
      * Convert response to string.
-     *
      * Note: This method is not part of the PSR-7 standard.
      *
      * @return string

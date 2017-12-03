@@ -2,8 +2,8 @@
 
 namespace AEngine\Orchid\Message;
 
-use InvalidArgumentException;
 use Psr\Http\Message\UriInterface;
+use InvalidArgumentException;
 
 /**
  * Value object representing a URI.
@@ -63,13 +63,6 @@ class Uri implements UriInterface
     protected $port;
 
     /**
-     * Uri base path
-     *
-     * @var string
-     */
-    protected $basePath = '';
-
-    /**
      * Uri path
      *
      * @var string
@@ -93,6 +86,29 @@ class Uri implements UriInterface
     /**
      * Create new Uri.
      *
+     * @param string $uri Fully qualified URI
+     */
+    public function __construct($uri = '')
+    {
+        if (!is_string($uri) && !method_exists($uri, '__toString')) {
+            throw new InvalidArgumentException('Uri must be a string');
+        }
+
+        $parts = parse_url($uri);
+        $this->scheme = isset($parts['scheme']) ? $this->filterScheme($parts['scheme']) : '';
+        $this->user = isset($parts['user']) ? $parts['user'] : '';
+        $this->password = isset($parts['pass']) ? $parts['pass'] : '';
+        $this->host = isset($parts['host']) ? $parts['host'] : '';
+        $this->port = isset($parts['port']) ? $this->filterPort($parts['port']) : null;
+        $this->path = isset($parts['path']) ? $parts['path'] : '';
+        $this->query = isset($parts['query']) ? $this->filterQuery($parts['query']) : '';
+        $this->fragment = isset($parts['fragment']) ? $this->filterQuery($parts['fragment']) : '';
+    }
+
+
+    /**
+     * Create new Uri from components.
+     *
      * @param string $scheme   Uri scheme.
      * @param string $host     Uri host.
      * @param int    $port     Uri port number.
@@ -102,51 +118,28 @@ class Uri implements UriInterface
      * @param string $user     Uri user.
      * @param string $password Uri password.
      */
-    public function __construct(
+    public static function createFromComponents(
         $scheme,
         $host,
         $port = null,
-        $path = '/',
+        $path = '',
         $query = '',
         $fragment = '',
         $user = '',
         $password = ''
     ) {
-        $this->scheme = $this->filterScheme($scheme);
-        $this->host = $host;
-        $this->port = $this->filterPort($port);
-        $this->path = empty($path) ? '/' : $this->filterPath($path);
-        $this->query = $this->filterQuery($query);
-        $this->fragment = $this->filterQuery($fragment);
-        $this->user = $user;
-        $this->password = $password;
-    }
 
-    /**
-     * Create new Uri from string.
-     *
-     * @param  string $uri Complete Uri string
-     *                     (i.e., https://user:pass@host:443/path?query).
-     *
-     * @return self
-     */
-    public static function createFromString($uri)
-    {
-        if (!is_string($uri) && !method_exists($uri, '__toString')) {
-            throw new InvalidArgumentException('Uri must be a string');
-        }
+        $uri = new static();
 
-        $parts = parse_url($uri);
-        $scheme = isset($parts['scheme']) ? $parts['scheme'] : '';
-        $user = isset($parts['user']) ? $parts['user'] : '';
-        $pass = isset($parts['pass']) ? $parts['pass'] : '';
-        $host = isset($parts['host']) ? $parts['host'] : '';
-        $port = isset($parts['port']) ? $parts['port'] : null;
-        $path = isset($parts['path']) ? $parts['path'] : '';
-        $query = isset($parts['query']) ? $parts['query'] : '';
-        $fragment = isset($parts['fragment']) ? $parts['fragment'] : '';
+        $uri = $uri->withScheme($scheme)
+            ->withHost($host)
+            ->withPort($port)
+            ->withPath($path)
+            ->withQuery($query)
+            ->withFragment($fragment)
+            ->withUserInfo($user, $password);
 
-        return new static($scheme, $host, $port, $path, $query, $fragment, $user, $pass);
+        return $uri;
     }
 
     /**
@@ -179,12 +172,12 @@ class Uri implements UriInterface
             $host = $matches[1];
 
             if ($matches[2]) {
-                $port = (int)substr($matches[2], 1);
+                $port = (int) substr($matches[2], 1);
             }
         } else {
             $pos = strpos($host, ':');
             if ($pos !== false) {
-                $port = (int)substr($host, $pos + 1);
+                $port = (int) substr($host, $pos + 1);
                 $host = strstr($host, ':', true);
             }
         }
@@ -196,6 +189,9 @@ class Uri implements UriInterface
         // parse_url() requires a full URL. As we don't extract the domain name or scheme,
         // we use a stand-in.
         $requestUri = parse_url('http://example.com' . $env->get('REQUEST_URI'), PHP_URL_PATH);
+        if (!is_string($requestUri)) {
+            $requestUri = '';
+        }
 
         $basePath = '';
         $virtualPath = $requestUri;
@@ -213,18 +209,16 @@ class Uri implements UriInterface
         $queryString = $env->get('QUERY_STRING', '');
         if ($queryString === '') {
             $queryString = parse_url('http://example.com' . $env->get('REQUEST_URI'), PHP_URL_QUERY);
+            if (!is_string($queryString)) {
+                $queryString = '';
+            }
         }
 
         // Fragment
         $fragment = '';
 
         // Build Uri
-        $uri = new static($scheme, $host, $port, $virtualPath, $queryString, $fragment, $username, $password);
-        if ($basePath) {
-            $uri = $uri->withBasePath($basePath);
-        }
-
-        return $uri;
+        return static::createFromComponents($scheme, $host, $port, $virtualPath, $queryString, $fragment, $username, $password);
     }
 
     /**
@@ -258,7 +252,6 @@ class Uri implements UriInterface
      * An empty scheme is equivalent to removing the scheme.
      *
      * @param string $scheme The scheme to use with the new instance.
-     *
      * @return self A new instance with the specified scheme.
      * @throws InvalidArgumentException for invalid or unsupported schemes.
      */
@@ -275,7 +268,6 @@ class Uri implements UriInterface
      * Filter Uri scheme.
      *
      * @param  string $scheme Raw Uri scheme.
-     *
      * @return string
      *
      * @throws InvalidArgumentException If the Uri scheme is not a string.
@@ -284,9 +276,9 @@ class Uri implements UriInterface
     protected function filterScheme($scheme)
     {
         static $valid = [
-            ''      => true,
+            '' => true,
             'https' => true,
-            'http'  => true,
+            'http' => true,
         ];
 
         if (!is_string($scheme) && !method_exists($scheme, '__toString')) {
@@ -358,9 +350,8 @@ class Uri implements UriInterface
      * user; an empty string for the user is equivalent to removing user
      * information.
      *
-     * @param string      $user     The user name to use for authority.
+     * @param string $user The user name to use for authority.
      * @param null|string $password The password associated with $user.
-     *
      * @return self A new instance with the specified user information.
      */
     public function withUserInfo($user, $password = null)
@@ -397,7 +388,6 @@ class Uri implements UriInterface
      * An empty host value is equivalent to removing the host.
      *
      * @param string $host The hostname to use with the new instance.
-     *
      * @return self A new instance with the specified host.
      * @throws InvalidArgumentException for invalid hostnames.
      */
@@ -442,8 +432,7 @@ class Uri implements UriInterface
      * information.
      *
      * @param null|int $port The port to use with the new instance; a null value
-     *                       removes the port information.
-     *
+     *     removes the port information.
      * @return self A new instance with the specified port.
      * @throws InvalidArgumentException for invalid ports.
      */
@@ -470,7 +459,6 @@ class Uri implements UriInterface
      * Filter Uri port.
      *
      * @param  null|int $port The Uri port number.
-     *
      * @return null|int
      *
      * @throws InvalidArgumentException If the port is invalid.
@@ -533,7 +521,6 @@ class Uri implements UriInterface
      * Implementations ensure the correct encoding as outlined in getPath().
      *
      * @param string $path The path to use with the new instance.
-     *
      * @return self A new instance with the specified path.
      * @throws InvalidArgumentException for invalid paths.
      */
@@ -545,52 +532,6 @@ class Uri implements UriInterface
 
         $clone = clone $this;
         $clone->path = $this->filterPath($path);
-
-        // if the path is absolute, then clear basePath
-        if (substr($path, 0, 1) == '/') {
-            $clone->basePath = '';
-        }
-
-        return $clone;
-    }
-
-    /**
-     * Retrieve the base path segment of the URI.
-     *
-     * Note: This method is not part of the PSR-7 standard.
-     *
-     * This method MUST return a string; if no path is present it MUST return
-     * an empty string.
-     *
-     * @return string The base path segment of the URI.
-     */
-    public function getBasePath()
-    {
-        return $this->basePath;
-    }
-
-    /**
-     * Set base path.
-     *
-     * Note: This method is not part of the PSR-7 standard.
-     *
-     * @param  string $basePath
-     *
-     * @return self
-     */
-    public function withBasePath($basePath)
-    {
-        if (!is_string($basePath)) {
-            throw new InvalidArgumentException('Uri path must be a string');
-        }
-        if (!empty($basePath)) {
-            $basePath = '/' . trim($basePath, '/'); // <-- Trim on both sides
-        }
-        $clone = clone $this;
-
-        if ($basePath !== '/') {
-            $clone->basePath = $this->filterPath($basePath);
-        }
 
         return $clone;
     }
@@ -604,7 +545,6 @@ class Uri implements UriInterface
      * percent-encoded.
      *
      * @param  string $path The raw uri path.
-     *
      * @return string       The RFC 3986 percent-encoded uri path.
      * @link   http://www.faqs.org/rfcs/rfc3986.html
      */
@@ -656,7 +596,6 @@ class Uri implements UriInterface
      * An empty query string value is equivalent to removing the query string.
      *
      * @param string $query The query string to use with the new instance.
-     *
      * @return self A new instance with the specified query string.
      * @throws InvalidArgumentException for invalid query strings.
      */
@@ -676,7 +615,6 @@ class Uri implements UriInterface
      * Filters the query string or fragment of a URI.
      *
      * @param string $query The raw uri query string.
-     *
      * @return string The percent-encoded query string.
      */
     protected function filterQuery($query)
@@ -723,7 +661,6 @@ class Uri implements UriInterface
      * An empty fragment value is equivalent to removing the fragment.
      *
      * @param string $fragment The fragment to use with the new instance.
-     *
      * @return self A new instance with the specified fragment.
      */
     public function withFragment($fragment)
@@ -765,18 +702,17 @@ class Uri implements UriInterface
     {
         $scheme = $this->getScheme();
         $authority = $this->getAuthority();
-        $basePath = $this->getBasePath();
         $path = $this->getPath();
         $query = $this->getQuery();
         $fragment = $this->getFragment();
 
-        $path = $basePath . '/' . ltrim($path, '/');
+        $path = '/' . ltrim($path, '/');
 
         return ($scheme ? $scheme . ':' : '')
-        . ($authority ? '//' . $authority : '')
-        . $path
-        . ($query ? '?' . $query : '')
-        . ($fragment ? '#' . $fragment : '');
+            . ($authority ? '//' . $authority : '')
+            . $path
+            . ($query ? '?' . $query : '')
+            . ($fragment ? '#' . $fragment : '');
     }
 
     /**
@@ -792,14 +728,8 @@ class Uri implements UriInterface
     {
         $scheme = $this->getScheme();
         $authority = $this->getAuthority();
-        $basePath = $this->getBasePath();
-
-        if ($authority && substr($basePath, 0, 1) !== '/') {
-            $basePath = $basePath . '/' . $basePath;
-        }
 
         return ($scheme ? $scheme . ':' : '')
-        . ($authority ? '//' . $authority : '')
-        . rtrim($basePath, '/');
+            . ($authority ? '//' . $authority : '');
     }
 }

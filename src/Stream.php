@@ -2,8 +2,8 @@
 
 namespace AEngine\Orchid\Message;
 
-use InvalidArgumentException;
 use Psr\Http\Message\StreamInterface;
+use InvalidArgumentException;
 use RuntimeException;
 
 /**
@@ -15,7 +15,6 @@ class Stream implements StreamInterface
 {
     /**
      * Bit mask to determine if the stream is a pipe
-     *
      * This is octal as per header stat.h
      */
     const FSTAT_MODE_S_IFIFO = 0010000;
@@ -94,7 +93,6 @@ class Stream implements StreamInterface
 
     /**
      * Get stream metadata as an associative array or retrieve a specific key.
-     *
      * The keys returned are identical to the keys returned from PHP's
      * stream_get_meta_data() function.
      *
@@ -118,7 +116,6 @@ class Stream implements StreamInterface
 
     /**
      * Is a resource attached to this stream?
-     *
      * Note: This method is not part of the PSR-7 standard.
      *
      * @return bool
@@ -130,7 +127,6 @@ class Stream implements StreamInterface
 
     /**
      * Attach new resource to this object.
-     *
      * Note: This method is not part of the PSR-7 standard.
      *
      * @param resource $newStream A PHP resource handle.
@@ -152,33 +148,29 @@ class Stream implements StreamInterface
 
     /**
      * Separates any underlying resources from the stream.
-     *
      * After the stream has been detached, the stream is in an unusable state.
      *
      * @return resource|null Underlying PHP stream, if any
      */
     public function detach()
     {
-        $oldResource = $this->stream;
-        $this->stream = null;
-        $this->meta = null;
+        $oldResource    = $this->stream;
+        $this->stream   = null;
+        $this->meta     = null;
         $this->readable = null;
         $this->writable = null;
         $this->seekable = null;
-        $this->size = null;
-        $this->isPipe = null;
+        $this->size     = null;
+        $this->isPipe   = null;
 
         return $oldResource;
     }
 
     /**
      * Reads all data from the stream into a string, from the beginning to end.
-     *
      * This method MUST attempt to seek to the beginning of the stream before
      * reading data and read the stream until the end is reached.
-     *
      * Warning: This could attempt to load a large amount of data into memory.
-     *
      * This method MUST NOT raise an exception in order to conform with PHP's
      * string casting operations.
      *
@@ -224,7 +216,7 @@ class Stream implements StreamInterface
     public function getSize()
     {
         if (!$this->size && $this->isAttached() === true) {
-            $stats = fstat($this->stream);
+            $stats      = fstat($this->stream);
             $this->size = isset($stats['size']) && !$this->isPipe() ? $stats['size'] : null;
         }
 
@@ -235,7 +227,6 @@ class Stream implements StreamInterface
      * Returns the current position of the file read/write pointer
      *
      * @return int Position of the file pointer
-     *
      * @throws RuntimeException on error.
      */
     public function tell()
@@ -317,7 +308,7 @@ class Stream implements StreamInterface
         if ($this->seekable === null) {
             $this->seekable = false;
             if ($this->isAttached()) {
-                $meta = $this->getMetadata();
+                $meta           = $this->getMetadata();
                 $this->seekable = !$this->isPipe() && $meta['seekable'];
             }
         }
@@ -332,10 +323,10 @@ class Stream implements StreamInterface
      *
      * @param int $offset Stream offset
      * @param int $whence Specifies how the cursor position will be calculated
-     *                    based on the seek offset. Valid values are identical to the built-in
-     *                    PHP $whence values for `fseek()`.  SEEK_SET: Set position equal to
-     *                    offset bytes SEEK_CUR: Set position to current location plus offset
-     *                    SEEK_END: Set position to end-of-stream plus offset.
+     *     based on the seek offset. Valid values are identical to the built-in
+     *     PHP $whence values for `fseek()`.  SEEK_SET: Set position equal to
+     *     offset bytes SEEK_CUR: Set position to current location plus offset
+     *     SEEK_END: Set position to end-of-stream plus offset.
      *
      * @throws RuntimeException on failure.
      */
@@ -349,14 +340,11 @@ class Stream implements StreamInterface
 
     /**
      * Seek to the beginning of the stream.
-     *
      * If the stream is not seekable, this method will raise an exception;
      * otherwise, it will perform a seek(0).
      *
-     * @see  seek()
-     *
+     * @see seek()
      * @link http://www.php.net/manual/en/function.fseek.php
-     *
      * @throws RuntimeException on failure.
      */
     public function rewind()
@@ -370,12 +358,11 @@ class Stream implements StreamInterface
      * Read data from the stream.
      *
      * @param int $length Read up to $length bytes from the object and return
-     *                    them. Fewer than $length bytes may be returned if underlying stream
-     *                    call returns fewer bytes.
+     *     them. Fewer than $length bytes may be returned if underlying stream
+     *     call returns fewer bytes.
      *
      * @return string Returns the data read from the stream, or an empty string
      *     if no bytes are available.
-     *
      * @throws RuntimeException if an error occurs.
      */
     public function read($length)
@@ -393,7 +380,6 @@ class Stream implements StreamInterface
      * @param string $string The string that is to be written.
      *
      * @return int Returns the number of bytes written to the stream.
-     *
      * @throws RuntimeException on failure.
      */
     public function write($string)
@@ -412,7 +398,6 @@ class Stream implements StreamInterface
      * Returns the remaining contents in a string
      *
      * @return string
-     *
      * @throws RuntimeException if unable to read or an error occurs while
      *     reading.
      */
@@ -435,7 +420,7 @@ class Stream implements StreamInterface
         if ($this->isPipe === null) {
             $this->isPipe = false;
             if ($this->isAttached()) {
-                $mode = fstat($this->stream)['mode'];
+                $mode         = fstat($this->stream)['mode'];
                 $this->isPipe = ($mode & self::FSTAT_MODE_S_IFIFO) !== 0;
             }
         }
