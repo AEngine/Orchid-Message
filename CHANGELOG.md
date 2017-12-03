@@ -3,7 +3,10 @@ Orchid Message changelog
 The latest version of this file can be found at the master branch of the
 Orchid Message repository.
 
-## 1.0.0 (2017-12-02)
+## 1.0.1 (2017-12-03)
+- Reformat and some changes in code
+
+### 1.0.0 (2017-12-02)
 - Update changelog
 - Fix composer.json
 
