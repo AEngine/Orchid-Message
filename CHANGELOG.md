@@ -1,7 +1,6 @@
-Orchid Message changelog
+Changelog
 ====
-The latest version of this file can be found at the master branch of the
-Orchid Message repository.
+The latest version of this file can be found at the master branch of the this repository.
 
 ## 1.0.1 (2017-12-03)
 - Reformat and some changes in code
