@@ -1,5 +1,6 @@
 The MIT License
 
+Copyright (c) 2015 Slim Framework.  
 Copyright (c) 2011-2019 AEngine.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

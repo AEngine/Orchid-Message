@@ -4,6 +4,7 @@ namespace AEngine\Orchid\Message;
 
 /**
  * Body
+ *
  * This class represents an HTTP message body and encapsulates a
  * streamable resource according to the PSR-7 standard.
  *

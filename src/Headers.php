@@ -2,15 +2,16 @@
 
 namespace AEngine\Orchid\Message;
 
-use AEngine\Orchid\Collection;
 use AEngine\Orchid\Message\Interfaces\HeadersInterface;
 
 /**
  * Headers
+ *
  * This class represents a collection of HTTP headers
  * that is used in both the HTTP request and response objects.
  * It also enables header name case-insensitivity when
  * getting or setting a header value.
+ *
  * Each HTTP header can have multiple values. This class
  * stores values into an array for each header name. When
  * you request a header value, you receive an array of values
@@ -24,31 +25,31 @@ class Headers extends Collection implements HeadersInterface
      * @var array
      */
     protected static $special = [
-        'CONTENT_TYPE'    => 1,
-        'CONTENT_LENGTH'  => 1,
-        'PHP_AUTH_USER'   => 1,
-        'PHP_AUTH_PW'     => 1,
+        'CONTENT_TYPE' => 1,
+        'CONTENT_LENGTH' => 1,
+        'PHP_AUTH_USER' => 1,
+        'PHP_AUTH_PW' => 1,
         'PHP_AUTH_DIGEST' => 1,
-        'AUTH_TYPE'       => 1,
+        'AUTH_TYPE' => 1,
     ];
 
     /**
      * Create new headers collection with data extracted from
-     * the application Environment object
+     * the PHP global environment
      *
-     * @param Environment $environment Orchid application Environment
+     * @param array $globals Global server variables
      *
      * @return self
      */
-    public static function createFromEnvironment(Environment $environment)
+    public static function createFromGlobals(array $globals)
     {
-        $data        = [];
-        $environment = self::determineAuthorization($environment);
-        foreach ($environment as $key => $value) {
+        $data = [];
+        $globals = self::determineAuthorization($globals);
+        foreach ($globals as $key => $value) {
             $key = strtoupper($key);
             if (isset(static::$special[$key]) || strpos($key, 'HTTP_') === 0) {
                 if ($key !== 'HTTP_CONTENT_LENGTH') {
-                    $data[$key] = $value;
+                    $data[self::reconstructOriginalKey($key)] = $value;
                 }
             }
         }
@@ -60,24 +61,24 @@ class Headers extends Collection implements HeadersInterface
      * If HTTP_AUTHORIZATION does not exist tries to get it from
      * getallheaders() when available.
      *
-     * @param Environment $environment Orchid application Environment
+     * @param array $globals The Orchid application Environment
      *
-     * @return Environment
+     * @return array
      */
 
-    public static function determineAuthorization(Environment $environment)
+    public static function determineAuthorization(array $globals)
     {
-        $authorization = $environment->get('HTTP_AUTHORIZATION');
+        $authorization = isset($globals['HTTP_AUTHORIZATION']) ? $globals['HTTP_AUTHORIZATION'] : null;
 
-        if (null === $authorization && is_callable('getallheaders')) {
+        if (empty($authorization) && is_callable('getallheaders')) {
             $headers = getallheaders();
             $headers = array_change_key_case($headers, CASE_LOWER);
             if (isset($headers['authorization'])) {
-                $environment->set('HTTP_AUTHORIZATION', $headers['authorization']);
+                $globals['HTTP_AUTHORIZATION'] = $headers['authorization'];
             }
         }
 
-        return $environment;
+        return $globals;
     }
 
     /**
@@ -100,10 +101,11 @@ class Headers extends Collection implements HeadersInterface
 
     /**
      * Set HTTP header value
+     *
      * This method sets a header value. It replaces
      * any values that may already exist for the header name.
      *
-     * @param string $key The case-insensitive header name
+     * @param string $key   The case-insensitive header name
      * @param string $value The header value
      */
     public function set($key, $value)
@@ -112,7 +114,7 @@ class Headers extends Collection implements HeadersInterface
             $value = [$value];
         }
         parent::set($this->normalizeKey($key), [
-            'value'       => $value,
+            'value' => $value,
             'originalKey' => $key,
         ]);
     }
@@ -120,7 +122,7 @@ class Headers extends Collection implements HeadersInterface
     /**
      * Get HTTP header value
      *
-     * @param  string $key The case-insensitive header name
+     * @param  string $key     The case-insensitive header name
      * @param  mixed  $default The default value if key does not exist
      *
      * @return string[]
@@ -137,7 +139,7 @@ class Headers extends Collection implements HeadersInterface
     /**
      * Get HTTP header key as originally specified
      *
-     * @param  string $key The case-insensitive header name
+     * @param  string $key     The case-insensitive header name
      * @param  mixed  $default The default value if key does not exist
      *
      * @return string
@@ -153,11 +155,12 @@ class Headers extends Collection implements HeadersInterface
 
     /**
      * Add HTTP header value
+     *
      * This method appends a header value. Unlike the set() method,
      * this method _appends_ this new value to any values
      * that already exist for this header name.
      *
-     * @param string       $key The case-insensitive header name
+     * @param string       $key   The case-insensitive header name
      * @param array|string $value The new header value(s)
      */
     public function add($key, $value)
@@ -191,6 +194,7 @@ class Headers extends Collection implements HeadersInterface
 
     /**
      * Normalize header name
+     *
      * This method transforms header names into a
      * normalized form. This is how we enable case-insensitive
      * header names in the other methods in this class.
@@ -207,5 +211,27 @@ class Headers extends Collection implements HeadersInterface
         }
 
         return $key;
+    }
+
+    /**
+     * Reconstruct original header name
+     *
+     * This method takes an HTTP header name from the Environment
+     * and returns it as it was probably formatted by the actual client.
+     *
+     * @param string $key An HTTP header key from the $_SERVER global variable
+     *
+     * @return string The reconstructed key
+     *
+     * @example CONTENT_TYPE => Content-Type
+     * @example HTTP_USER_AGENT => User-Agent
+     */
+    private static function reconstructOriginalKey($key)
+    {
+        if (strpos($key, 'HTTP_') === 0) {
+            $key = substr($key, 5);
+        }
+
+        return strtr(ucwords(strtr(strtolower($key), '_', ' ')), ' ', '-');
     }
 }

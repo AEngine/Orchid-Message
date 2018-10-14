@@ -2,8 +2,6 @@
 
 namespace AEngine\Orchid\Message\Interfaces;
 
-use AEngine\Orchid\Interfaces\CollectionInterface;
-
 /**
  * Headers Interface
  */

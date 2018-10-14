@@ -30,12 +30,12 @@ class Cookies implements CookiesInterface
      * @var array
      */
     protected $defaults = [
-        'value'    => '',
-        'domain'   => null,
+        'value' => '',
+        'domain' => null,
         'hostonly' => null,
-        'path'     => null,
-        'expires'  => null,
-        'secure'   => false,
+        'path' => null,
+        'expires' => null,
+        'secure' => false,
         'httponly' => false,
     ];
 
@@ -62,7 +62,7 @@ class Cookies implements CookiesInterface
     /**
      * Get request cookie
      *
-     * @param  string $name Cookie name
+     * @param  string $name    Cookie name
      * @param  mixed  $default Cookie default value
      *
      * @return mixed Cookie value if present, else default
@@ -75,7 +75,7 @@ class Cookies implements CookiesInterface
     /**
      * Set response cookie
      *
-     * @param string       $name Cookie name
+     * @param string       $name  Cookie name
      * @param string|array $value Cookie value, or cookie properties
      */
     public function set($name, $value)
@@ -104,7 +104,7 @@ class Cookies implements CookiesInterface
     /**
      * Convert to `Set-Cookie` header
      *
-     * @param  string $name Cookie name
+     * @param  string $name       Cookie name
      * @param  array  $properties Cookie properties
      *
      * @return string
@@ -154,6 +154,7 @@ class Cookies implements CookiesInterface
      * @param  string $header The raw HTTP request `Cookie:` header
      *
      * @return array Associative array of cookie names and values
+     *
      * @throws InvalidArgumentException if the cookie data cannot be parsed
      */
     public static function parseHeader($header)
@@ -166,15 +167,15 @@ class Cookies implements CookiesInterface
             throw new InvalidArgumentException('Cannot parse Cookie data. Header value must be a string.');
         }
 
-        $header  = rtrim($header, "\r\n");
-        $pieces  = preg_split('@[;]\s*@', $header);
+        $header = rtrim($header, "\r\n");
+        $pieces = preg_split('@[;]\s*@', $header);
         $cookies = [];
 
         foreach ($pieces as $cookie) {
             $cookie = explode('=', $cookie, 2);
 
             if (count($cookie) === 2) {
-                $key   = urldecode($cookie[0]);
+                $key = urldecode($cookie[0]);
                 $value = urldecode($cookie[1]);
 
                 if (!isset($cookies[$key])) {
